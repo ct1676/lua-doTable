@@ -38,7 +38,7 @@ function _dump2String(value)
                     if type(v) ~= "table" then
                         ret = ret .. _key(v) .. ", "
                     else
-                        ret = ret .. _dump(v)
+                        ret = ret .. _dump(v, k)
                     end
                 else
                     ret = ret .. _dump(v, k)
