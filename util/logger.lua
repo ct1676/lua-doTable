@@ -15,6 +15,8 @@ function _dump2String(value)
     local function _key(v)
         if type(v) == "string" then
             v = "'" .. v .. "'"
+        elseif type(v) == "boolean" then
+            v = v and "true" or "false"
         end
         return v
     end
@@ -36,7 +38,7 @@ function _dump2String(value)
             table.loopMapTable(value, function (i, k, v)
                 if type(k) == "number" then
                     if type(v) ~= "table" then
-                        ret = ret .. _key(v) .. ", "
+                        ret = ret .. _value(k) .. "=" .. _key(v) .. ", "
                     else
                         ret = ret .. _dump(v, k)
                     end

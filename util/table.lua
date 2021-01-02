@@ -70,11 +70,14 @@ function table.reverse(t)
     end
 end
 
-function table.removeTableData(tb, conditionFunc)
+function table.removeTableData(tb, conditionFunc, once)
     if tb and next(tb) then
         for i = #tb, 1, -1 do
             if conditionFunc(tb[i]) then
                 table.remove(tb, i)
+                if once then
+                    break
+                end
             end
         end
     end
@@ -169,6 +172,53 @@ function table.SetIndexField(tbl, fieldName)
     return ret
 end
 
+function table.SetIndexFieldAndFoldSubTblIn(tbl, fieldName)
+    local ret = {}
+    local keys = {}
+    local values = {}
+    for _, v in pairs(tbl) do
+        local newKey = v[fieldName]
+        if values[newKey] then
+            table.insert(values[newKey], v)
+        else
+            keys[#keys + 1] = newKey
+            values[newKey] = {v}
+        end
+    end
+    table.sort(keys, function(a, b)
+        if type(a) == "number" and type(b) == "number" then
+            return a < b
+        else
+            return tostring(a) < tostring(b)
+        end
+    end)
+    for _, v in ipairs(keys) do
+        ret[v] = values[v]
+    end
+    return ret
+end
+
+--遍历子表排序
+function table.SortSubTbl(tbl, sortFunc)
+    for _,v in pairs(tbl) do
+        table.sort(v, sortFunc)
+    end
+    return tbl
+end
+
+function table.RemoveRecord(tbl, func, once)
+    local saveList = {}
+    for k, v in pairs(tbl) do
+        if func(v) then
+            saveList[k] = v
+            if once then
+                break
+            end
+        end
+    end
+    return saveList
+end
+
 function table.CutField(tbl, fieldNames)
     local _cuts = {}
     for _, v in ipairs(fieldNames) do
@@ -178,6 +228,23 @@ function table.CutField(tbl, fieldNames)
         if type(v) == "table" then
             for key, value in pairs(v) do
                 if _cuts[key] then
+                    tbl[k][key] = nil
+                end
+            end
+        end
+    end
+    return tbl
+end
+
+function table.RetainField(tbl, fieldNames)
+    local _cuts = {}
+    for _, v in ipairs(fieldNames) do
+        _cuts[v] = true
+    end
+    for k, v in pairs(tbl) do
+        if type(v) == "table" then
+            for key, value in pairs(v) do
+                if not _cuts[key] then
                     tbl[k][key] = nil
                 end
             end

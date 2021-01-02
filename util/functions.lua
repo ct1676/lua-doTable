@@ -260,7 +260,7 @@ function HexNumToRGB(str_num, notfloat, alpha)
     if string.len(str_num) == 6 then
         str_num_six = str_num
     else
-        str_num_six = string.sub(str_num, 1, 7)
+        str_num_six = string.sub(str_num, 2, 7)
     end
     
     local RGB = {}
