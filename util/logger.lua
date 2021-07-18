@@ -2,7 +2,7 @@
  @authors caituo
  @date    2020-02-7 15:19:34
 ]]--
-function _dump2String(value)
+function _dump2String(tblName, value)
     local function _value(v)
         if type(v) == "number" then
             v = "[" .. v .. "]"
@@ -53,11 +53,11 @@ function _dump2String(value)
     
     if type(value) == "table" then
         local result = ""
-        result = "local ret = {\n"
+        result = string.format("local %s = {\n", tblName)
         table.loopMapTable(value, function (i, k, v)
             result = result .. "    " .. _dump(v, k) .. "\n"
         end)
-        result = result .. "};return ret;"
+        result = result .. string.format("};return %s;", tblName)
         return result
     else
         return values
@@ -65,7 +65,7 @@ function _dump2String(value)
 end
 
 function dumpString(tag, ...)
-    local ret = _dump2String(...)
+    local ret = _dump2String(tag, ...)
     local func = loadstring(ret)
     local status, err = pcall(func)
     if not status then

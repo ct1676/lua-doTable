@@ -34,38 +34,64 @@ require("util.logger")
 require("util.file")
 
 global.doTableBase = require("doTableBase")
+global.doMultTableBase = require("doMultTableBase")
+
 global.tablePath = tablePath
 global.scriptPath = scriptPath
 global.customPath = scriptPath .. "custom"
  
 local need_trans_table = {}
+local need_trans_multtable = {}
  
 --实例化处理脚本
 local customScripts = attrdir(global.customPath)
-for _,fileName in ipairs(customScripts) do
+for _, fileName in ipairs(customScripts) do
 	local doClass = require("custom." .. fileName).new()
 	local combineTable = doClass.combine()
-	if "_none_" == combineTable then
-		printWarning("combinetable missed", fileName)
-	else
-		if not need_trans_table[combineTable] then
-			need_trans_table[combineTable] = {}
+	if type(combineTable) == "string" then
+		if "_none_" == combineTable then
+			printWarning("combinetable missed", fileName)
+		else
+			if not need_trans_table[combineTable] then
+				need_trans_table[combineTable] = {}
+			end
+			need_trans_table[combineTable][fileName] = doClass
 		end
-		need_trans_table[combineTable][fileName] = doClass
+	elseif type(combineTable) == "table" then
+		if not need_trans_multtable[fileName] then
+			need_trans_multtable[fileName] = {}
+		end
+		for _, v in ipairs(combineTable) do
+			need_trans_multtable[fileName][v] = doClass
+		end
 	end
 end
 
 dump(need_trans_table,"need_trans_table",2)
+dump(need_trans_multtable,"need_trans_multtable",2)
 
 --遍历把源表输入进处理脚本处理
+--单表多处理
 for tableName, v in pairs(need_trans_table) do
 	local tableData = require(tableName)
 	if tableData then
-		printCostTime(function ( ... )
+		printCostTime(function (...)
 			for _, doClass in pairs(v) do
 				doClass:Init(tableName, clone(tableData))
 				doClass:Start()
 			end
 		end, tableName)
 	end
+end
+--多表单处理
+for className, v in pairs(need_trans_multtable) do
+	printCostTime(function (...)
+		local classIns = nil
+		for tableName, doClass in pairs(v) do
+			local tableData = require(tableName)
+			doClass:AddTable(tableName, clone(tableData))
+			classIns = doClass
+		end
+		classIns:Start()
+	end, className)
 end

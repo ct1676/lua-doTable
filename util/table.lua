@@ -103,6 +103,26 @@ function table.mergeTables(...)
     return origin
 end
 
+function table.mergeHashTables(...)
+    local tabs = {...}
+    if not tabs then
+        return {}
+    end
+    local origin = tabs[1]
+    for i = 2, #tabs do
+        if origin then
+            if tabs[i] then
+                for k, v in pairs(tabs[i]) do
+                    origin[k] = v
+                end
+            end
+        else
+            origin = tabs[i]
+        end
+    end
+    return origin
+end
+
 function table.isInTable(tb, _v)
     for _, v in pairs(tb) do
         if v == _v then
@@ -127,7 +147,7 @@ function table.capture(tb, st, et)
 end
 
 --按顺序循环map的table
-function table.loopMapTable(tb, handl)
+function table.loopMapTable(tb, handl, isFall)
     local keys = {}
     local values = {}
     for k, v in pairs(tb) do
@@ -136,7 +156,11 @@ function table.loopMapTable(tb, handl)
     end
     table.sort(keys, function(a, b)
         if type(a) == "number" and type(b) == "number" then
-            return a < b
+            if isFall then
+                return a > b
+            else
+                return a < b
+            end
         else
             return tostring(a) < tostring(b)
         end
@@ -198,9 +222,61 @@ function table.SetIndexFieldAndFoldSubTblIn(tbl, fieldName)
     return ret
 end
 
+function table.SetIndexFieldAndFoldSubTblInByOriIdx(tbl, fieldName)
+    local ret = {}
+    local keys = {}
+    local values = {}
+    for k, v in pairs(tbl) do
+        local newKey = v[fieldName]
+        if values[newKey] then
+            values[newKey][k] = v
+        else
+            keys[#keys + 1] = newKey
+            values[newKey] = {[k] = v}
+        end
+    end
+    table.sort(keys, function(a, b)
+        if type(a) == "number" and type(b) == "number" then
+            return a < b
+        else
+            return tostring(a) < tostring(b)
+        end
+    end)
+    for _, v in ipairs(keys) do
+        ret[v] = values[v]
+    end
+    return ret
+end
+
+function table.SetIndexFieldAndFoldSubTblInByOtherField(tbl, fieldName, otherFieldName)
+    local ret = {}
+    local keys = {}
+    local values = {}
+    for k, v in pairs(tbl) do
+        local newKey = v[fieldName]
+        if values[newKey] then
+            values[newKey][v[otherFieldName]] = v
+        else
+            keys[#keys + 1] = newKey
+            values[newKey] = {[v[otherFieldName]] = v}
+        end
+    end
+    table.sort(keys, function(a, b)
+        if type(a) == "number" and type(b) == "number" then
+            return a < b
+        else
+            return tostring(a) < tostring(b)
+        end
+    end)
+    for _, v in ipairs(keys) do
+        ret[v] = values[v]
+    end
+    return ret
+end
+
 --遍历子表排序
 function table.SortSubTbl(tbl, sortFunc)
-    for _,v in pairs(tbl) do
+    for _, v in pairs(tbl) do
         table.sort(v, sortFunc)
     end
     return tbl
